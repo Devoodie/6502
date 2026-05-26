@@ -1,2 +1,0 @@
-0
-60418 51657804 1754073977717468524 41c1fb6c7a0be7ba724e40fa20418281 3 p/raylib-5.5.0-AAAAAFuxzAD2rvDWeLpuPWemAGm18y3JZakwx5f0Y4QN/src/external/glfw/deps/wayland/xdg-shell.xml
