@@ -1,0 +1,29 @@
+.{
+    .name = .raylib_zig,
+    .version = "5.6.0-dev",
+    .fingerprint = 0xc4cfa8c610114f28,
+    .dependencies = .{
+        .raylib = .{
+            .url = "git+https://github.com/raysan5/raylib#e70f9157bcae046804e754e98a2694adcfdbfa5d",
+            .hash = "1220f6aef0d678ba6e3d67a60069b5f32dc965a930c797f463840d224759d615b864",
+        },
+        .raygui = .{
+            .url = "git+https://github.com/raysan5/raygui#76b36b597edb70ffaf96f046076adc20d67e7827",
+            .hash = "1220ce6e40b454766d901ac4a19b2408f84365fcad4e4840c788b59f34a0ed698883",
+        },
+    },
+    .minimum_zig_version = "0.14.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "emcc.zig",
+        "lib/raylib.zig",
+        "lib/raylib-ext.zig",
+        "lib/raymath.zig",
+        "lib/raymath-ext.zig",
+        "lib/rlgl.zig",
+        "lib/rlgl-ext.zig",
+        "lib/raygui.zig",
+        "lib/raygui-ext.zig",
+    },
+}

@@ -11,7 +11,6 @@ pub const Bus = struct {
     ppu_ptr: *ppu.Ppu = undefined,
     apu_ptr: *apu.Apu = undefined,
     catridge_ptr: *mapper.Cartridge = undefined,
-    mutex: *std.Thread.Mutex = undefined,
     isTest: bool = false,
     test_ram: []u8 = undefined,
 

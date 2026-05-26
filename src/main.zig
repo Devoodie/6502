@@ -2,28 +2,22 @@ const std = @import("std");
 const components = @import("nes");
 const display = @import("Display.zig");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
 
-    var lock: std.Thread.Mutex = .{};
-
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-
-    var allocator = gpa.allocator();
+    const allocator = init.gpa;
 
     //    var nes: components.Nes = .{ .Cpu = .{}, .Ppu = .{ .mutex = &lock }, .Bus = .{ .mutex = &lock } };
     //   nes.init();
     var nes = try allocator.create(components.Nes);
     defer allocator.destroy(nes);
-    nes.Ppu.mutex = &lock;
-    nes.Bus.mutex = &lock;
 
     nes.init();
 
     nes.Ppu.bitmap = try allocator.create([240][256]u5);
 
-    var args = std.process.args();
+    var args = init.minimal.args.iterate();
+    const io = init.io;
     var path: ?[]u8 = null;
 
     while (true) {
@@ -44,14 +38,17 @@ pub fn main() !void {
 
     std.debug.print("Path: {s}\n", .{path.?});
 
-    const working_directory = std.fs.cwd();
+    const working_directory = std.Io.Dir.cwd();
 
-    const ines_file = try working_directory.openFile(path.?, .{});
-    defer ines_file.close();
+    const ines_file = try working_directory.openFile(io, path.?, .{});
+    var read_buff: [1024]u8 = undefined;
+    var ines_reader = ines_file.reader(io, &read_buff);
+    var ines_interf = ines_reader.interface;
+    defer ines_file.close(io);
 
-    try ines_file.seekTo(0);
+    try ines_reader.seekTo(0);
 
-    const rom = try ines_file.readToEndAlloc(allocator, 768000);
+    const rom = try ines_interf.allocRemaining(allocator, .limited(768000));
     defer allocator.free(rom);
 
     std.debug.print("Rom Loaded: {d}!\n\n", .{rom.len});
@@ -75,8 +72,8 @@ pub fn main() !void {
 
         nes.Cpu.pc = nes.Bus.addr_bus;
     }
-    //
-    var cpu_timer = try std.time.Timer.start();
+    const clock: std.Io.Clock = .{.cpu_process};
+    var cpu_timer = try std.Io.Clock.now(clock, io);
 
     //  nes.Cpu.operate();
     {
@@ -85,13 +82,13 @@ pub fn main() !void {
 
         var display_thread = try std.Thread.spawn(.{}, display.draw, .{&nes.Ppu});
         defer display_thread.join();
-        try masterClock(nes, &cpu_timer);
+        masterClock(nes, &cpu_timer);
     }
     try nes.Mapper.deinit(allocator);
 }
 
-pub fn masterClock(nes: *components.Nes, cpu_timer: *std.time.Timer) !void {
-    var timer = try std.time.Timer.start();
+pub fn masterClock(nes: *components.Nes, cpu_timer: *std.time.Timer) void {
+    //    var timer = try std.time.Timer.start();
     while (true) {
         if (nes.Cpu.wait_time < cpu_timer.read()) {
             cpu_timer.reset();
@@ -99,10 +96,10 @@ pub fn masterClock(nes: *components.Nes, cpu_timer: *std.time.Timer) !void {
             nes.Cpu.operate();
         }
         if (nes.Cpu.cycles >= 114) {
-            timer.reset();
+            //           timer.reset();
             nes.Ppu.operate();
-            const time = timer.read();
-            std.debug.print("PPU Scanline Time: {d} ns\n", .{time});
+            //          const time = timer.read();
+            //         std.debug.print("PPU Scanline Time: {d} ns\n", .{time});
             nes.Cpu.cycles -= 114;
         }
     }

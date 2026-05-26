@@ -37,7 +37,6 @@ pub const Ppu = struct {
     sprites: [64]Sprite = undefined,
     nmi: u1 = 0,
     cartridge: *mapper.Cartridge = undefined,
-    mutex: *std.Thread.Mutex = undefined,
     wait_time: u64 = 0,
 
     pub fn cycle(self: *Ppu, count: u16) void {

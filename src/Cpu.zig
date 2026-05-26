@@ -27,6 +27,7 @@ pub const Cpu = struct {
     wait_time: u64 = 0,
     cycles: u64 = 0,
 
+    // the cycles highly effect the speed of the program as intended!
     pub fn cycle(self: *Cpu, cycles: u16) void {
         self.cycles += cycles;
         self.wait_time += @as(u64, cycles) * 559;
