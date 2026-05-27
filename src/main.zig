@@ -44,6 +44,7 @@ pub fn main(init: std.process.Init) !void {
     var read_buff: [1024]u8 = undefined;
     var ines_reader = ines_file.reader(io, &read_buff);
     var ines_interf = ines_reader.interface;
+
     defer ines_file.close(io);
 
     try ines_reader.seekTo(0);
@@ -65,24 +66,38 @@ pub fn main(init: std.process.Init) !void {
         nes.Cpu.pc += 1;
         const msb: u16 = nes.Cpu.GetImmediate();
 
-        //this is pulling the wrong address
         nes.Bus.addr_bus = msb << 8;
         nes.Bus.addr_bus |= lsb;
         std.debug.print("Initialization Address: 0x{x}\n\n", .{nes.Bus.addr_bus});
 
         nes.Cpu.pc = nes.Bus.addr_bus;
     }
+
     const clock: std.Io.Clock = .{.cpu_process};
-    var cpu_timer = try std.Io.Clock.now(clock, io);
-
-    //  nes.Cpu.operate();
+    var current_time = clock.now(io);
+    var target_time: std.Io.Timestamp = undefined; 
+    //change this shit.
     {
-        //var nes_thread = try std.Thread.spawn(.{}, masterClock, .{ &nes, &cpu_timer });
-        //defer nes_thread.join();
+        while(true){
+            //do all the operations then check to see if the elapsed time has passed
+            // if (nes.Cpu.wait_time < cpu_timer.read()) {
+            //     cpu_timer.reset();
+            //     nes.Cpu.wait_time = 0;
+            //     nes.Cpu.operate();
+            //  }
 
-        var display_thread = try std.Thread.spawn(.{}, display.draw, .{&nes.Ppu});
-        defer display_thread.join();
-        masterClock(nes, &cpu_timer);
+            if(nes.Cpu.cycles < 114){
+                nes.Cpu.operate();
+            } else {
+                if(current_time)
+                nes.Cpu.wait_time;
+                //           timer.reset();
+                nes.Ppu.operate();
+                    //          const time = timer.read();
+                    //         std.debug.print("PPU Scanline Time: {d} ns\n", .{time});
+                nes.Cpu.cycles -= 114;
+            }
+        }
     }
     try nes.Mapper.deinit(allocator);
 }
