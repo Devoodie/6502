@@ -15,6 +15,7 @@ pub fn main(init: std.process.Init) !void {
     nes.init();
 
     nes.Ppu.bitmap = try allocator.create([240][256]u5);
+    defer allocator.destroy(nes.Ppu.bitmap);
 
     var args = init.minimal.args.iterate();
     const io = init.io;
@@ -40,15 +41,16 @@ pub fn main(init: std.process.Init) !void {
 
     const working_directory = std.Io.Dir.cwd();
 
-    const ines_file = try working_directory.openFile(io, path.?, .{});
+    var ines_file = try working_directory.openFile(io, path.?, .{});
     var read_buff: [1024]u8 = undefined;
     var ines_reader = ines_file.reader(io, &read_buff);
-    var ines_interf = ines_reader.interface;
+    var ines_interf = &ines_reader.interface;
 
     defer ines_file.close(io);
 
     try ines_reader.seekTo(0);
 
+    //768000
     const rom = try ines_interf.allocRemaining(allocator, .limited(768000));
     defer allocator.free(rom);
 
@@ -73,12 +75,11 @@ pub fn main(init: std.process.Init) !void {
         nes.Cpu.pc = nes.Bus.addr_bus;
     }
 
-    const clock: std.Io.Clock = .{.cpu_process};
+    const clock: std.Io.Clock = .cpu_process;
     var current_time = clock.now(io);
-    var target_time: std.Io.Timestamp = undefined; 
     //change this shit.
     {
-        while(true){
+        while (true) {
             //do all the operations then check to see if the elapsed time has passed
             // if (nes.Cpu.wait_time < cpu_timer.read()) {
             //     cpu_timer.reset();
@@ -86,16 +87,16 @@ pub fn main(init: std.process.Init) !void {
             //     nes.Cpu.operate();
             //  }
 
-            if(nes.Cpu.cycles < 114){
+            if (nes.Cpu.cycles < 114) {
                 nes.Cpu.operate();
             } else {
-                if(current_time)
-                nes.Cpu.wait_time;
-                //           timer.reset();
+                if (current_time.nanoseconds < current_time.addDuration(nes.Cpu.wait_time).nanoseconds) continue;
                 nes.Ppu.operate();
-                    //          const time = timer.read();
-                    //         std.debug.print("PPU Scanline Time: {d} ns\n", .{time});
-                nes.Cpu.cycles -= 114;
+                current_time = clock.now(io);
+                //          const time = timer.read();
+                //         std.debug.print("PPU Scanline Time: {d} ns\n", .{time});
+                nes.Cpu.cycles = 0;
+                nes.Cpu.wait_time.nanoseconds = 0;
             }
         }
     }

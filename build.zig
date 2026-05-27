@@ -54,7 +54,6 @@ pub fn build(b: *std.Build) void {
     });
 
     const raylib = raylib_dep.module("raylib"); // main raylib module
-    const raygui = raylib_dep.module("raygui"); // raygui module
     const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
 
     const exe = b.addExecutable(.{
@@ -72,7 +71,6 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(exe);
     exe.root_module.linkLibrary(raylib_artifact);
     exe.root_module.addImport("raylib", raylib);
-    exe.root_module.addImport("raygui", raygui);
     exe.root_module.addImport("nes", nes);
     exe.root_module.addImport("test", unit_test);
     exe.root_module.addImport("display", display);

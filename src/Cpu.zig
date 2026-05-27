@@ -24,13 +24,14 @@ pub const Cpu = struct {
     irq_line: u1 = 0,
     extra_cycle: u8 = 0,
     odd_cycle: u1 = 0,
-    wait_time: std.Io.Timestamp = undefined,
+    wait_time: std.Io.Duration = .fromNanoseconds(0),
     cycles: u64 = 0,
 
     // the cycles highly effect the speed of the program as intended!
     pub fn cycle(self: *Cpu, cycles: u16) void {
         self.cycles += cycles;
-        self.wait_time += @as(u64, cycles) * 559;
+
+        self.wait_time.nanoseconds += @as(i96, cycles) * 559;
         //     //std.debug.print("Cpu Wait Time: {d}!\n", .{self.wait_time});
         self.odd_cycle +%= @intCast(cycles % 2);
         //        //std.debug.print("The cycles are {d}!\n", .{self.odd_cycle});
