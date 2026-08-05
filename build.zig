@@ -51,18 +51,25 @@ pub fn build(b: *std.Build) void {
 
     const raylib_dep = b.dependency("raylib_zig", .{
         .target = target,
+        .optimize = optimize,
     });
 
     const raylib = raylib_dep.module("raylib"); // main raylib module
     const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
 
+    ppu.addImport("raylib", raylib);
+
+    const root = b.addModule("main", .{
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    root.addImport("raylib", raylib);
+
     const exe = b.addExecutable(.{
         .name = "nes",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
+        .root_module = root,
     });
 
     // This declares intent for the executable to be installed into the
@@ -109,6 +116,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+
     lib_unit_tests.root_module.addImport("mapper", mapper);
     lib_unit_tests.root_module.addImport("json", json);
     lib_unit_tests.root_module.addImport("nes", nes);

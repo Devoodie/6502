@@ -1,6 +1,7 @@
 const std = @import("std");
 const components = @import("nes");
 const display = @import("Display.zig");
+const rl = @import("raylib");
 
 pub fn main(init: std.process.Init) !void {
     std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
@@ -56,6 +57,16 @@ pub fn main(init: std.process.Init) !void {
 
     std.debug.print("Rom Loaded: {d}!\n\n", .{rom.len});
 
+    //initwindow
+    rl.initWindow(1280, 1200, "Devooty's Nes");
+    defer rl.closeWindow();
+
+    var screen: [184320]u8 = std.mem.zeroes([184320]u8);
+    const image: rl.Image = .{ .data = &screen, .format = .uncompressed_r8g8b8, .mipmaps = 1, .height = 240, .width = 256 };
+    const screen_texture = try rl.loadTextureFromImage(image);
+    nes.Ppu.screen_texture = screen_texture;
+    nes.Ppu.screen = &screen;
+
     try nes.Mapper.mapper_init(@constCast(&rom), allocator);
     //program start
     nes.Ppu.nametable_mirroring = nes.Mapper.mirroring;
@@ -76,10 +87,13 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const clock: std.Io.Clock = .cpu_process;
+    var prev_time = clock.now(io);
     var current_time = clock.now(io);
     //change this shit.
     {
-        while (true) {
+        while (!rl.windowShouldClose()) {
+            rl.beginDrawing();
+            defer rl.endDrawing();
             //do all the operations then check to see if the elapsed time has passed
             // if (nes.Cpu.wait_time < cpu_timer.read()) {
             //     cpu_timer.reset();
@@ -90,13 +104,15 @@ pub fn main(init: std.process.Init) !void {
             if (nes.Cpu.cycles < 114) {
                 nes.Cpu.operate();
             } else {
-                if (current_time.nanoseconds < current_time.addDuration(nes.Cpu.wait_time).nanoseconds) continue;
-                nes.Ppu.operate();
                 current_time = clock.now(io);
-                //          const time = timer.read();
+                if (current_time.nanoseconds < prev_time.addDuration(nes.Cpu.wait_time).nanoseconds) {
+                    continue;
+                }
+                nes.Ppu.operate();
                 //         std.debug.print("PPU Scanline Time: {d} ns\n", .{time});
                 nes.Cpu.cycles = 0;
                 nes.Cpu.wait_time.nanoseconds = 0;
+                prev_time = clock.now(io);
             }
         }
     }
