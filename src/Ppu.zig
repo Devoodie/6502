@@ -582,11 +582,13 @@ pub const Ppu = struct {
     }
 
     pub fn draw(self: *Ppu, texture: rl.Texture2D, screen: []u8) !void {
+        rl.beginDrawing();
         updateScreen(screen, self.bitmap, self.pallet_memory);
 
         rl.updateTexture(texture, screen.ptr);
 
         rl.drawTextureEx(self.screen_texture, .{ .x = 0, .y = 0 }, 0, 4, rl.Color.white);
+        rl.endDrawing();
     }
 
     fn updateScreen(screen: []u8, bitmap: *[240][256]u5, pallet: [32]u8) void {

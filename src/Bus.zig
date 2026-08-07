@@ -19,7 +19,7 @@ pub const Bus = struct {
             self.data_bus = self.test_ram[self.addr_bus];
         } else {
             if (self.addr_bus <= 0x1FFF) {
-                self.data_bus = self.cpu_ptr.*.memory[self.addr_bus % 0x800];
+                self.data_bus = self.cpu_ptr.*.memory[self.addr_bus & 0x7FF];
             } else if (self.addr_bus <= 0x3FFF) {
                 //            if (self.mutex.tryLock()) {
                 self.data_bus = self.ppu_ptr.PpuMmo(self.addr_bus);
@@ -68,6 +68,7 @@ pub const Bus = struct {
         const addr_buffer = self.addr_bus;
         const dma_addr: u16 = @as(u16, self.data_bus) << 8;
         self.ppu_ptr.oam_addr = 0;
+        std.debug.print("DIRECT MEMORY ACCESS\n", .{});
 
         for (0..256) |i| {
             self.addr_bus = dma_addr + @as(u16, @intCast(i));

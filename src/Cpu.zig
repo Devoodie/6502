@@ -34,7 +34,6 @@ pub const Cpu = struct {
         self.wait_time.nanoseconds += @as(i96, cycles) * 559;
         //     //std.debug.print("Cpu Wait Time: {d}!\n", .{self.wait_time});
         self.odd_cycle +%= @intCast(cycles % 2);
-        self.wait_time = 0;
         //        //std.debug.print("The cycles are {d}!\n", .{self.odd_cycle});
     }
 
@@ -2331,6 +2330,7 @@ pub const Cpu = struct {
         //instruction execute
         switch (first_nib % 4) {
             0 => CONTROL: {
+                // std.debug.print("CONTROL\n", .{});
                 switch (self.instruction) {
                     0x00 => {
                         self.forceInterrupt();

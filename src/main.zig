@@ -86,14 +86,13 @@ pub fn main(init: std.process.Init) !void {
         nes.Cpu.pc = nes.Bus.addr_bus;
     }
 
-    const clock: std.Io.Clock = .cpu_process;
+    const clock: std.Io.Clock = .awake;
     var prev_time = clock.now(io);
     var current_time = clock.now(io);
+    var first = true;
     //change this shit.
     {
         while (!rl.windowShouldClose()) {
-            rl.beginDrawing();
-            defer rl.endDrawing();
             //do all the operations then check to see if the elapsed time has passed
             // if (nes.Cpu.wait_time < cpu_timer.read()) {
             //     cpu_timer.reset();
@@ -105,14 +104,18 @@ pub fn main(init: std.process.Init) !void {
                 nes.Cpu.operate();
             } else {
                 current_time = clock.now(io);
+                if (first) {
+                    std.debug.print("CPU: {d}ns, {d} CYCLES\n", .{ current_time.toNanoseconds() - prev_time.toNanoseconds(), nes.Cpu.cycles });
+                    first = false;
+                }
                 if (current_time.nanoseconds < prev_time.addDuration(nes.Cpu.wait_time).nanoseconds) {
                     continue;
                 }
                 nes.Ppu.operate();
-                //         std.debug.print("PPU Scanline Time: {d} ns\n", .{time});
                 nes.Cpu.cycles = 0;
                 nes.Cpu.wait_time.nanoseconds = 0;
                 prev_time = clock.now(io);
+                first = true;
             }
         }
     }
