@@ -58,6 +58,7 @@ pub fn build(b: *std.Build) void {
     const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
 
     ppu.addImport("raylib", raylib);
+    display.addImport("raylib", raylib);
 
     const root = b.addModule("main", .{
         .root_source_file = b.path("src/main.zig"),

@@ -57,16 +57,6 @@ pub fn main(init: std.process.Init) !void {
 
     std.debug.print("Rom Loaded: {d}!\n\n", .{rom.len});
 
-    //initwindow
-    rl.initWindow(1280, 1200, "Devooty's Nes");
-    defer rl.closeWindow();
-
-    var screen: [184320]u8 = std.mem.zeroes([184320]u8);
-    const image: rl.Image = .{ .data = &screen, .format = .uncompressed_r8g8b8, .mipmaps = 1, .height = 240, .width = 256 };
-    const screen_texture = try rl.loadTextureFromImage(image);
-    nes.Ppu.screen_texture = screen_texture;
-    nes.Ppu.screen = &screen;
-
     try nes.Mapper.mapper_init(@constCast(&rom), allocator);
     //program start
     nes.Ppu.nametable_mirroring = nes.Mapper.mirroring;
@@ -90,33 +80,34 @@ pub fn main(init: std.process.Init) !void {
     var prev_time = clock.now(io);
     var current_time = clock.now(io);
     var first = true;
-    //change this shit.
-    {
-        while (!rl.windowShouldClose()) {
-            //do all the operations then check to see if the elapsed time has passed
-            // if (nes.Cpu.wait_time < cpu_timer.read()) {
-            //     cpu_timer.reset();
-            //     nes.Cpu.wait_time = 0;
-            //     nes.Cpu.operate();
-            //  }
 
-            if (nes.Cpu.cycles < 114) {
-                nes.Cpu.operate();
-            } else {
-                current_time = clock.now(io);
-                if (first) {
-                    std.debug.print("CPU: {d}ns, {d} CYCLES\n", .{ current_time.toNanoseconds() - prev_time.toNanoseconds(), nes.Cpu.cycles });
-                    first = false;
-                }
-                if (current_time.nanoseconds < prev_time.addDuration(nes.Cpu.wait_time).nanoseconds) {
-                    continue;
-                }
-                nes.Ppu.operate();
-                nes.Cpu.cycles = 0;
-                nes.Cpu.wait_time.nanoseconds = 0;
-                prev_time = clock.now(io);
-                first = true;
+    var display_thread = try std.Thread.spawn(.{}, display.draw, .{ io, &nes.Ppu });
+    display_thread.detach();
+
+    while (true) {
+        //do all the operations then check to see if the elapsed time has passed
+        // if (nes.Cpu.wait_time < cpu_timer.read()) {
+        //     cpu_timer.reset();
+        //     nes.Cpu.wait_time = 0;
+        //     nes.Cpu.operate();
+        //  }
+
+        if (nes.Cpu.cycles < 114) {
+            nes.Cpu.operate();
+        } else {
+            current_time = clock.now(io);
+            if (first) {
+                first = false;
             }
+            if (current_time.nanoseconds < prev_time.addDuration(nes.Cpu.wait_time).nanoseconds) {
+                continue;
+            }
+            nes.Ppu.operate();
+            nes.Cpu.cycles = 0;
+            nes.Cpu.wait_time.nanoseconds = 0;
+            // std.debug.print("CYCLE + PPU TIME: {d}\n", .{current_time.toNanoseconds() - prev_time.toNanoseconds()});
+            prev_time = clock.now(io);
+            first = true;
         }
     }
     try nes.Mapper.deinit(allocator);

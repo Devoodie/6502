@@ -32,9 +32,7 @@ pub const Cpu = struct {
         self.cycles += cycles;
 
         self.wait_time.nanoseconds += @as(i96, cycles) * 559;
-        //     //std.debug.print("Cpu Wait Time: {d}!\n", .{self.wait_time});
         self.odd_cycle +%= @intCast(cycles % 2);
-        //        //std.debug.print("The cycles are {d}!\n", .{self.odd_cycle});
     }
 
     pub fn stackPush(self: *Cpu, data: u8) void {

@@ -2,8 +2,7 @@ const std = @import("std");
 const rl = @import("raylib");
 const picture_unit = @import("ppu");
 
-pub fn draw(ppu: *picture_unit.Ppu) !void {
-    //
+pub fn draw(io: std.Io, ppu: *picture_unit.Ppu) !void {
     const width = 1280;
     const height = 1200;
     rl.initWindow(width, height, "Devooty's Nes");
@@ -13,11 +12,11 @@ pub fn draw(ppu: *picture_unit.Ppu) !void {
     const image: rl.Image = .{ .data = &screen, .format = .uncompressed_r8g8b8, .mipmaps = 1, .height = 240, .width = 256 };
     const bitmap = try rl.loadTextureFromImage(image);
 
+    _ = io;
+    rl.setTargetFPS(60);
     while (true) {
         if (ppu.status & 0x80 == 0x80) {
-            rl.beginDrawing();
-
-            rl.clearBackground(rl.Color.black);
+            //            rl.clearBackground(rl.Color.black);
             GetScreen(&screen, ppu.bitmap, ppu.pallet_memory);
 
             rl.updateTexture(bitmap, &screen);
@@ -25,6 +24,7 @@ pub fn draw(ppu: *picture_unit.Ppu) !void {
             rl.drawTextureEx(bitmap, .{ .x = 0, .y = 0 }, 0, 4, rl.Color.white);
 
             rl.endDrawing();
+            std.debug.print("FRAME TIME: {d}ms\n", .{rl.getFrameTime()});
         }
     }
     // }
