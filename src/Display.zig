@@ -6,7 +6,6 @@ pub fn draw(io: std.Io, ppu: *picture_unit.Ppu) !void {
     const width = 1280;
     const height = 1200;
     rl.initWindow(width, height, "Devooty's Nes");
-    rl.setTargetFPS(10);
     defer rl.closeWindow();
 
     var screen: [184320]u8 = std.mem.zeroes([184320]u8);
@@ -20,7 +19,6 @@ pub fn draw(io: std.Io, ppu: *picture_unit.Ppu) !void {
             rl.beginDrawing();
 
             vblank = true;
-            std.debug.print("FRAME TIME: {d}ms\n", .{rl.getFrameTime()});
             rl.clearBackground(rl.Color.black);
             GetScreen(&screen, ppu.bitmap, ppu.pallet_memory);
 

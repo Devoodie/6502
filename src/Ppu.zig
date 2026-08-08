@@ -558,7 +558,6 @@ pub const Ppu = struct {
             if (self.scanline == 241) {
                 self.status |= 0x80;
                 std.debug.print("DRAWING!\n", .{});
-                //                try self.draw(self.screen_texture, self.screen);
                 if (self.control & 0x80 == 0x80) self.nmi = 1;
             }
             self.scanline += 1;
