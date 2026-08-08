@@ -6,6 +6,7 @@ pub fn draw(io: std.Io, ppu: *picture_unit.Ppu) !void {
     const width = 1280;
     const height = 1200;
     rl.initWindow(width, height, "Devooty's Nes");
+    rl.setTargetFPS(10);
     defer rl.closeWindow();
 
     var screen: [184320]u8 = std.mem.zeroes([184320]u8);
@@ -13,18 +14,22 @@ pub fn draw(io: std.Io, ppu: *picture_unit.Ppu) !void {
     const bitmap = try rl.loadTextureFromImage(image);
 
     _ = io;
-    rl.setTargetFPS(60);
+    var vblank = false;
     while (true) {
-        if (ppu.status & 0x80 == 0x80) {
-            //            rl.clearBackground(rl.Color.black);
+        if (ppu.status & 0x80 == 0x80 and !vblank) {
+            rl.beginDrawing();
+
+            vblank = true;
+            std.debug.print("FRAME TIME: {d}ms\n", .{rl.getFrameTime()});
+            rl.clearBackground(rl.Color.black);
             GetScreen(&screen, ppu.bitmap, ppu.pallet_memory);
 
             rl.updateTexture(bitmap, &screen);
 
             rl.drawTextureEx(bitmap, .{ .x = 0, .y = 0 }, 0, 4, rl.Color.white);
-
             rl.endDrawing();
-            std.debug.print("FRAME TIME: {d}ms\n", .{rl.getFrameTime()});
+        } else {
+            vblank = false;
         }
     }
     // }
